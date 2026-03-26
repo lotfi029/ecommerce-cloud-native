@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: catalog-config
+  namespace: default
+data:
+  ElasticSettings__Uri: "http://elasticsearch-service:9200"

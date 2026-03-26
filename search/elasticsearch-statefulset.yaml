@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: elasticsearch
+  namespace: default
+spec:
+  serviceName: elasticsearch-service
+  replicas: 1
+  selector:
+    matchLabels:
+      app: elasticsearch
+  template:
+    metadata:
+      labels:
+        app: elasticsearch
+    spec:
+      containers:
+      - name: elasticsearch
+        image: docker.elastic.co/elasticsearch/elasticsearch:9.2.2
+        ports:
+        - containerPort: 9200
+          name: http
+        env:
+        - name: discovery.type
+          valueFrom:
+            configMapKeyRef:
+              name: elasticsearch-config
+              key: discovery.type
+        - name: xpack.security.enabled
+          valueFrom:
+            configMapKeyRef:
+              name: elasticsearch-config
+              key: xpack.security.enabled
+        - name: ES_JAVA_OPTS
+          valueFrom:
+            configMapKeyRef:
+              name: elasticsearch-config
+              key: ES_JAVA_OPTS
+        - name: bootstrap.memory_lock
+          valueFrom:
+            configMapKeyRef:
+              name: elasticsearch-config
+              key: bootstrap.memory_lock
+        volumeMounts:
+        - name: elasticsearch-data
+          mountPath: /usr/share/elasticsearch/data
+        livenessProbe:
+          httpGet:
+            path: /_cluster/health
+            port: 9200
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 5
+        readinessProbe:
+          httpGet:
+            path: /_cluster/health
+            port: 9200
+          initialDelaySeconds: 60
+          periodSeconds: 30
+          timeoutSeconds: 10
+          failureThreshold: 5
+      volumes:
+      - name: elasticsearch-data
+        persistentVolumeClaim:
+          claimName: elasticsearch-data-pvc
+  volumeClaimTemplates:
+  - metadata:
+      name: elasticsearch-data
+    spec:
+      accessModes: [ "ReadWriteOnce" ]
+      resources:
+        requests:
+          storage: 10Gi
