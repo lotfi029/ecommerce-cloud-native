@@ -34,7 +34,10 @@ spec:
               name: catalog-config
               key: ElasticSettings__Uri
         - name: ConnectionStrings__DefaultConnection
-          value: "host=postgres-service;port=5432;database=ecommerce_catalog;username=postgres;password=String"
+          valueFrom:
+            secretKeyRef:
+              name: catalog-secret
+              key: ConnectionStrings__DefaultConnection
         livenessProbe:
           httpGet:
             path: /health
