@@ -21,7 +21,7 @@ spec:
         command: ['sh', '-c', 'until nc -z postgres-service 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
       - name: catalog
-        image: lotfi029/catalog:1.0.1
+        image: lotfi029/catalog:1.1.0
         ports:
         - containerPort: 8080
           name: http
@@ -34,10 +34,7 @@ spec:
               name: catalog-config
               key: ElasticSettings__Uri
         - name: ConnectionStrings__DefaultConnection
-          valueFrom:
-            secretKeyRef:
-              name: catalog-secret
-              key: ConnectionStrings__DefaultConnection
+          value: "host=postgres-service;port=5432;database=ecommerce_catalog;username=postgres;password=String"
         livenessProbe:
           httpGet:
             path: /health

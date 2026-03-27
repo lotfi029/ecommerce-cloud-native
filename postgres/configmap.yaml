@@ -5,8 +5,4 @@ metadata:
   namespace: default
 data:
   POSTGRES_USER: "postgres"
-  POSTGRES_DB: "postgres"
   PGDATA: "/var/lib/postgresql/data/pgdata"
-  init-databases.sql: |
-    CREATE DATABASE ecommerce_user_v02;
-    CREATE DATABASE ecommerce_catalog;

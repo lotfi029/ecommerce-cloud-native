@@ -31,46 +31,40 @@ spec:
             secretKeyRef:
               name: postgres-secret
               key: POSTGRES_PASSWORD
+        - name: PGDATA
+          valueFrom:
+            configMapKeyRef:
+              name: postgres-config
+              key: PGDATA
         volumeMounts:
         - name: postgres-data
           mountPath: /var/lib/postgresql/data
-        - name: init-scripts
-          mountPath: /docker-entrypoint-initdb.d
         livenessProbe:
           exec:
-            command:
-            - pg_isready
-            - -U
-            - postgres
+            command: ["/bin/sh", "-c", "pg_isready -U postgres"]
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 5
         readinessProbe:
           exec:
-            command:
-            - pg_isready
-            - -U
-            - postgres
+            command: ["/bin/sh", "-c", "pg_isready -U postgres"]
           initialDelaySeconds: 30
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 5
-      volumes:
-      - name: postgres-data
-        persistentVolumeClaim:
-          claimName: postgres-data-pvc
-      - name: init-scripts
-        configMap:
-          name: postgres-config
-          items:
-          - key: init-databases.sql
-            path: init-databases.sql
+        resources:
+          limits:
+            memory: "1Gi"
+            cpu: "1"
+          requests:
+            memory: "512Mi"
+            cpu: "500m"
   volumeClaimTemplates:
   - metadata:
       name: postgres-data
     spec:
-      accessModes: [ "ReadWriteOnce" ]
+      accessModes: ["ReadWriteOnce"]
       resources:
         requests:
           storage: 10Gi
