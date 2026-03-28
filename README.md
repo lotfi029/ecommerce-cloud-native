@@ -1,288 +1,48 @@
-# Ecommerce Cloud-Native Project
+# Ecommerce Cloud-Native
 
-A complete cloud-native e-commerce platform built with Kubernetes, microservices architecture, and AWS infrastructure as code.
+This repository contains the infrastructure and deployment files for an e-commerce platform built with Terraform and Kubernetes.
 
-## 📋 Project Overview
+## Overview
 
-This repository contains the infrastructure and orchestration for a scalable e-commerce platform running on AWS EKS (Elastic Kubernetes Service). The project includes:
+- `Terraform/` provisions the AWS network layer with a VPC, public and private subnets, internet gateway, NAT, and route tables.
+- `CD/` contains Kubernetes manifests and Kustomize bases for the application stack.
+- Components included in this repo: Catalog, User, PostgreSQL, Elasticsearch, Kibana, and Ingress.
+- `CD/redis` and `CD/rmq` currently exist as placeholders.
 
-- **Kubernetes deployment manifests** for microservices (Catalog, User, Search, etc.)
-- **Infrastructure as Code** using Terraform for AWS networking and resources
-- **High availability setup** across 2+ availability zones
-- **Service mesh ready** with networking policies
+## Project Structure
 
-## 🏗️ Architecture
+- `Terraform/` Terraform root module and AWS network module
+- `CD/catalog/` Catalog service manifests
+- `CD/user/` User service manifests
+- `CD/postgres/` PostgreSQL manifests
+- `CD/search/` Elasticsearch and Kibana manifests
+- `CD/ingress/` Ingress manifests
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    AWS VPC (10.0.0.0/16)                   │
-├─────────────────────────────────────────────────────────────┤
-│                                                             │
-│  ┌─────────────────────────────────────────────────────┐  │
-│  │  Ingress / Load Balancer (Public Layer)             │  │
-│  └──────────────────┬──────────────────────────────────┘  │
-│                     │                                      │
-│  ┌──────────────────▼──────────────────────────────────┐  │
-│  │  EKS Cluster (Kubernetes)                          │  │
-│  │  ┌────────────────────────────────────────────────┐ │  │
-│  │  │ Services:                                      │ │  │
-│  │  │ • Catalog Service (CatalogService)            │ │  │
-│  │  │ • User Service                                │ │  │
-│  │  │ • Search Service (Elasticsearch + Kibana)     │ │  │
-│  │  │ • API Gateway / Ingress Controller            │ │  │
-│  │  └────────────────────────────────────────────────┘ │  │
-│  └──────────────────┬──────────────────────────────────┘  │
-│                     │                                      │
-│  ┌──────────────────▼──────────────────────────────────┐  │
-│  │  Data Layer (Private Subnets)                      │  │
-│  │ • PostgreSQL Database                             │  │
-│  │ • Redis Cache                                     │  │
-│  │ • RabbitMQ Message Broker                         │  │
-│  │ • Elasticsearch                                   │  │
-│  └──────────────────────────────────────────────────────┘  │
-│                                                             │
-└─────────────────────────────────────────────────────────────┘
-```
+## Requirements
 
-## 📁 Project Structure
+- Terraform 1.0+
+- AWS credentials configured
+- Kubernetes cluster
+- `kubectl` with Kustomize support
 
-```
-ecommerce-cloud-native/
-├── Terraform/                    # Infrastructure as Code
-│   ├── Network/                  # VPC, Subnets, IGW, NAT, Route Tables
-│   ├── variables.tf              # Root variables
-│   ├── locals.tf                 # Local values
-│   ├── provider.tf               # AWS provider config
-│   └── terraform.tfvars          # Default values
-│
-├── catalog/                      # Catalog Service Kubernetes manifests
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   ├── configmap.yaml
-│   ├── secret.yaml
-│   ├── hpa.yaml
-│   ├── networkpolicy.yaml
-│   └── kustomization.yaml
-│
-├── user/                         # User Service Kubernetes manifests
-│   ├── deployment.yaml
-│   ├── service.yaml
-│   ├── configmap.yaml
-│   ├── secret.yaml
-│   ├── hpa.yaml
-│   ├── networkpolicy.yaml
-│   └── kustomization.yaml
-│
-├── postgres/                     # PostgreSQL Database
-│   ├── statefulset.yaml
-│   ├── service.yaml
-│   ├── configmap.yaml
-│   ├── secret.yaml
-│   ├── hpa.yaml
-│   ├── networkpolicy.yaml
-│   └── kustomization.yaml
-│
-├── redis/                        # Redis Cache
-│   └── kustomization.yaml
-│
-├── rmq/                          # RabbitMQ Message Broker
-│   └── kustomization.yaml
-│
-├── search/                       # Elasticsearch & Kibana
-│   ├── elasticsearch-*.yaml
-│   ├── kibana-*.yaml
-│   └── kustomization.yaml
-│
-├── ingress/                      # Ingress Controller
-│   ├── ingress.yaml
-│   └── kustomization.yaml
-│
-├── kustomization.yaml            # Root kustomization
-├── README.md                     # This file
-└── .gitignore
-```
-
-## 🔗 Backend Services
-
-### Catalog Service
-The core microservice for product catalog management.
-
-**Repository:** [CatalogService](https://github.com/lotfi029/CatalogService)
-
-Clone and review the backend service:
-```bash
-git clone https://github.com/lotfi029/CatalogService
-cd CatalogService
-```
-
-## 🚀 Quick Start
-
-### Prerequisites
-- AWS Account with appropriate credentials
-- Terraform >= 1.0
-- kubectl installed
-- Helm (optional, for advanced deployments)
-
-### 1. Deploy Infrastructure
+## Quick Start
 
 ```bash
 cd Terraform
 terraform init
-terraform plan
 terraform apply
+
+kubectl apply -k CD
 ```
 
-This creates:
-- VPC with 2 public and 2 private subnets
-- Internet Gateway and NAT Gateways
-- Route tables and security groups
-- All networking resources across 2 AZs
+## Future Work
 
-### 2. Verify Infrastructure
+- Add Terraform support for provisioning an Amazon EKS cluster
+- Complete Redis and RabbitMQ deployment manifests
+- Improve production readiness with monitoring, security, and CI/CD automation
 
-```bash
-terraform output
-```
+## Notes
 
-### 3. Deploy Kubernetes Services
-
-```bash
-kubectl apply -k .
-```
-
-Or deploy specific services:
-```bash
-kubectl apply -k catalog/
-kubectl apply -k user/
-kubectl apply -k search/
-```
-
-### 4. Monitor Deployment
-
-```bash
-kubectl get pods -A
-kubectl get svc -A
-kubectl describe pod <pod-name>
-```
-
-## 📊 Infrastructure Details
-
-### Network Architecture
-- **VPC CIDR**: 10.0.0.0/16
-- **Public Subnets**: 10.0.1.0/24, 10.0.2.0/24 (2 AZs)
-- **Private Subnets**: 10.0.10.0/24, 10.0.11.0/24 (2 AZs)
-- **NAT Gateways**: 2 (one per AZ)
-- **Availability Zones**: us-west-2a, us-west-2b (configurable)
-
-### Services
-| Service | Port | Type | Status |
-|---------|------|------|--------|
-| Catalog API | 8080 | ClusterIP | Active |
-| User Service | 8081 | ClusterIP | Active |
-| Elasticsearch | 9200 | ClusterIP | Active |
-| Kibana | 5601 | LoadBalancer | Active |
-| PostgreSQL | 5432 | ClusterIP | Active |
-| Redis | 6379 | ClusterIP | Active |
-| RabbitMQ | 5672 | ClusterIP | Active |
-
-## 📝 Configuration
-
-### Environment Variables
-Set in `terraform.tfvars`:
-```hcl
-environment             = "staging"
-aws_region              = "us-west-2"
-vpc_cidr                = "10.0.0.0/16"
-enable_nat_gateway      = true
-enable_dns_hostnames    = true
-```
-
-### Kubernetes Secrets
-Create secrets for sensitive data:
-```bash
-kubectl create secret generic db-credentials \
-  --from-literal=username=postgres \
-  --from-literal=password=<secure-password>
-```
-
-## 🔍 Monitoring & Logging
-
-### Kubernetes Dashboard
-```bash
-kubectl port-forward -n kube-system svc/kubernetes-dashboard 8443:443
-```
-
-### Kibana (Elasticsearch UI)
-```bash
-kubectl port-forward -n default svc/kibana 5601:5601
-```
-
-Access at: http://localhost:5601
-
-### Service Logs
-```bash
-kubectl logs deployment/catalog
-kubectl logs deployment/user
-```
-
-## 🛠️ Troubleshooting
-
-### Check Terraform State
-```bash
-terraform state list
-terraform state show <resource>
-```
-
-### Validate Kustomization
-```bash
-kubectl kustomize .
-```
-
-### Debugging Pods
-```bash
-kubectl describe pod <pod-name>
-kubectl logs <pod-name>
-kubectl exec -it <pod-name> -- /bin/bash
-```
-
-## 🗑️ Cleanup
-
-### Destroy Kubernetes Resources
-```bash
-kubectl delete -k .
-```
-
-### Destroy AWS Infrastructure
-```bash
-cd Terraform
-terraform destroy
-```
-
-## 📚 Documentation
-
-- [Terraform Network Configuration](./Terraform/Network/README.md)
-- [AWS VPC Documentation](https://docs.aws.amazon.com/vpc/)
-- [Kubernetes Documentation](https://kubernetes.io/docs/)
-- [Kustomize Guide](https://kustomize.io/)
-
-## 🤝 Contributing
-
-1. Fork the repository
-2. Create a feature branch
-3. Make your changes
-4. Submit a pull request
-
-## 📄 License
-
-This project is a cloud-native implementation for educational and demonstration purposes.
-
-## 📞 Support
-
-For issues, questions, or contributions related to:
-- **Infrastructure**: Check Terraform files and logs
-- **Backend Service**: See [CatalogService](https://github.com/lotfi029/CatalogService)
-- **Kubernetes**: Review manifests in respective service folders
-
----
-
-**Last Updated**: March 2026
+- Default Terraform values target AWS `us-west-2`.
+- The Terraform code in this repo currently creates the networking layer only.
+- Application source code is not included in this repository.
