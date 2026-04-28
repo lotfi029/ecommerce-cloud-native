@@ -4,7 +4,6 @@ resources:
 - elasticsearch-configmap.yaml
 - elasticsearch-statefulset.yaml
 - elasticsearch-service.yaml
-- elasticsearch-hpa.yaml
 - elasticsearch-networkpolicy.yaml
 - kibana-configmap.yaml
 - kibana-deployment.yaml

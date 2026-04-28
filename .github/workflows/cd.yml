@@ -1,0 +1,123 @@
+name: CD
+
+on:
+  repository_dispatch:
+    types:
+    - catalog_image_pushed
+  push:
+    branches:
+    - master
+    paths:
+    - CD/**
+    - Terraform/**
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: Docker image tag to deploy for the catalog service
+        required: false
+        type: string
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  EKS_CLUSTER_NAME: ${{ vars.EKS_CLUSTER_NAME }}
+
+jobs:
+  terraform:
+    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    env:
+      TF_VAR_aws_region: ${{ env.AWS_REGION }}
+      TF_VAR_cluster_name: ${{ env.EKS_CLUSTER_NAME }}
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup Terraform
+      uses: hashicorp/setup-terraform@v3
+
+    - name: Terraform init
+      working-directory: Terraform
+      run: terraform init
+
+    - name: Terraform validate
+      working-directory: Terraform
+      run: terraform validate
+
+    - name: Terraform plan
+      working-directory: Terraform
+      run: terraform plan -out=tfplan
+
+    - name: Terraform apply
+      working-directory: Terraform
+      run: terraform apply -auto-approve tfplan
+
+  deploy:
+    needs: terraform
+    if: always() && (github.event_name == 'repository_dispatch' || needs.terraform.result == 'success')
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+        aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+        aws-region: ${{ env.AWS_REGION }}
+
+    - name: Setup kubectl
+      uses: azure/setup-kubectl@v4
+
+    - name: Setup Helm
+      uses: azure/setup-helm@v4
+
+    - name: Update kubeconfig
+      run: aws eks update-kubeconfig --region "$AWS_REGION" --name "$EKS_CLUSTER_NAME"
+
+    - name: Install ingress-nginx
+      run: |
+        helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+        helm repo update
+        helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+          --namespace ingress-nginx \
+          --create-namespace \
+          --wait
+
+    - name: Apply default StorageClass
+      run: kubectl apply -f CD/storageclass.yaml
+
+    - name: Resolve image tag
+      id: image_tag
+      shell: bash
+      run: |
+        if [[ "${{ github.event_name }}" == "repository_dispatch" && -n "${{ github.event.client_payload.image_tag }}" ]]; then
+          echo "tag=${{ github.event.client_payload.image_tag }}" >> "$GITHUB_OUTPUT"
+        elif [[ "${{ github.event_name }}" == "workflow_dispatch" && -n "${{ github.event.inputs.image_tag }}" ]]; then
+          echo "tag=${{ github.event.inputs.image_tag }}" >> "$GITHUB_OUTPUT"
+        else
+          echo "tag=latest" >> "$GITHUB_OUTPUT"
+        fi
+
+    - name: Apply Kubernetes manifests
+      run: kubectl apply -k CD/
+
+    - name: Update catalog image
+      run: kubectl set image deployment/catalog-deployment catalog=docker.io/lotfi029/catalog-service:${{ steps.image_tag.outputs.tag }} -n default
+
+    - name: Wait for rollouts
+      run: |
+        kubectl rollout status deployment/catalog-deployment -n default --timeout=10m
+        kubectl rollout status deployment/user-deployment -n default --timeout=10m
+        kubectl rollout status deployment/kibana-deployment -n default --timeout=10m
+        kubectl rollout status statefulset/postgres -n default --timeout=10m
+        kubectl rollout status statefulset/elasticsearch -n default --timeout=10m

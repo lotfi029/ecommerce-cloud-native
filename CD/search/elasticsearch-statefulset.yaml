@@ -60,10 +60,6 @@ spec:
           periodSeconds: 30
           timeoutSeconds: 10
           failureThreshold: 5
-      volumes:
-      - name: elasticsearch-data
-        persistentVolumeClaim:
-          claimName: elasticsearch-data-pvc
   volumeClaimTemplates:
   - metadata:
       name: elasticsearch-data

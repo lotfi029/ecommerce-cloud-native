@@ -3,6 +3,7 @@ kind: Kustomization
 
 # 1. Include all your microservices
 resources:
+- storageclass.yaml
 - catalog
 - user
 - postgres

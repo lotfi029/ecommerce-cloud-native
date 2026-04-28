@@ -35,12 +35,12 @@ output "internet_gateway_id" {
 
 output "nat_gateway_ids" {
   description = "The IDs of the NAT Gateway"
-  value       = aws_nat_gateway.nat.id 
+  value       = aws_nat_gateway.nat.id
 }
 
 output "nat_gateway_ips" {
   description = "The public IPs of the NAT Gateways"
-  value       =  aws_eip.nat.public_ip
+  value       = aws_eip.nat.public_ip
 }
 
 output "public_route_table_id" {

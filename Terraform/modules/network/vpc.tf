@@ -4,6 +4,6 @@ resource "aws_vpc" "ecommerce-vpc" {
   enable_dns_hostnames = true
 
   tags = {
-      Name = "${var.environment}-vpc"
-    }
+    Name = "${var.environment}-vpc"
+  }
 }

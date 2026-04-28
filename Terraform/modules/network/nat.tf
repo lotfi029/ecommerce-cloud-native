@@ -1,5 +1,5 @@
 resource "aws_eip" "nat" {
-  domain   = "vpc"
+  domain     = "vpc"
   depends_on = [aws_internet_gateway.igw]
 }
 
@@ -9,6 +9,6 @@ resource "aws_nat_gateway" "nat" {
   depends_on    = [aws_internet_gateway.igw]
 
   tags = {
-      Name = "${var.environment}-nat"
-    }
+    Name = "${var.environment}-nat"
+  }
 }

@@ -7,9 +7,9 @@ resource "aws_route_table" "public" {
   }
 
   tags = {
-      Name = "${var.environment}-public-rt"
-      Tier = "Public"
-    }
+    Name = "${var.environment}-public-rt"
+    Tier = "Public"
+  }
 }
 
 resource "aws_route_table_association" "public" {
@@ -27,9 +27,9 @@ resource "aws_route_table" "private" {
   }
 
   tags = {
-      Name = "${var.environment}-private-rt"
-      Tier = "Private"
-    }
+    Name = "${var.environment}-private-rt"
+    Tier = "Private"
+  }
 }
 
 resource "aws_route_table_association" "private" {
