@@ -28,3 +28,10 @@ spec:
       port: 8080
     - protocol: TCP
       port: 8081
+  - from:
+    - podSelector:
+        matchLabels:
+          app: seq
+    ports:
+    - protocol: TCP
+      port: 5341

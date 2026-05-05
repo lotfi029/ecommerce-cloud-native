@@ -18,6 +18,11 @@ variable "vpc_name" {
   type        = string
 }
 
+variable "cluster_name" {
+  description = "EKS cluster name for subnet discovery tags"
+  type        = string
+}
+
 variable "vpc_cidr" {
   description = "VPC CIDR block"
   type        = string

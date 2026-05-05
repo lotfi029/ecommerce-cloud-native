@@ -5,4 +5,6 @@ metadata:
   annotations:
     storageclass.kubernetes.io/is-default-class: "true"
 provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
 volumeBindingMode: WaitForFirstConsumer

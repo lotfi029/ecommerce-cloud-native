@@ -22,6 +22,7 @@ module "vpc" {
   private_subnet_cidrs = var.private_subnet_cidrs
   availability_zones   = var.availability_zones
   vpc_name             = var.vpc_name
+  cluster_name         = var.cluster_name
   aws_region           = var.aws_region
 }
 

@@ -61,7 +61,7 @@ jobs:
 
   deploy:
     needs: terraform
-    if: always() && (github.event_name == 'repository_dispatch' || needs.terraform.result == 'success')
+    if: always() && (needs.terraform.result == 'success' || needs.terraform.result == 'skipped')
     runs-on: ubuntu-latest
 
     steps:

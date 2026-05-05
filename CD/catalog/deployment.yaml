@@ -21,7 +21,7 @@ spec:
         command: ['sh', '-c', 'until nc -z postgres-service 5432; do echo waiting for postgres; sleep 2; done;']
       containers:
       - name: catalog
-        image: lotfi029/catalog:1.1.0
+        image: lotfi029/catalog-service:latest
         ports:
         - containerPort: 8080
           name: http
@@ -38,6 +38,11 @@ spec:
             secretKeyRef:
               name: catalog-secret
               key: ConnectionStrings__DefaultConnection
+        - name: Serilog__WriteTo__2__Args__serverUrl
+          valueFrom:
+            configMapKeyRef:
+              name: catalog-config
+              key: Serilog__WriteTo__2__Args__serverUrl
         livenessProbe:
           httpGet:
             path: /health

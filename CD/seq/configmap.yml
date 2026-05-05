@@ -1,0 +1,7 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: seq-config
+  namespace: default
+data:
+  ACCEPT_EULA: Y

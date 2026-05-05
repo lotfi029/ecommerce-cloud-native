@@ -35,48 +35,18 @@ resource "aws_iam_openid_connect_provider" "eks" {
   }
 }
 
-resource "aws_launch_template" "eks_node_group" {
-  name_prefix = "${var.cluster_name}-node-"
-
-  block_device_mappings {
-    device_name = "/dev/xvda"
-
-    ebs {
-      delete_on_termination = true
-      encrypted             = true
-      volume_size           = var.node_disk_size
-      volume_type           = "gp3"
-    }
-  }
-
-  vpc_security_group_ids = [aws_security_group.eks_node.id]
-
-  tag_specifications {
-    resource_type = "instance"
-
-    tags = {
-      Name        = "${var.cluster_name}-node"
-      Environment = var.environment
-    }
-  }
-}
-
 resource "aws_eks_node_group" "this" {
   cluster_name    = aws_eks_cluster.this.name
   node_group_name = "${var.cluster_name}-managed-ng"
   node_role_arn   = aws_iam_role.eks_node_group.arn
   subnet_ids      = var.private_subnet_ids
   instance_types  = var.node_instance_types
+  disk_size       = var.node_disk_size
 
   scaling_config {
     desired_size = var.node_desired_size
     min_size     = var.node_min_size
     max_size     = var.node_max_size
-  }
-
-  launch_template {
-    id      = aws_launch_template.eks_node_group.id
-    version = aws_launch_template.eks_node_group.latest_version
   }
 
   lifecycle {
@@ -96,12 +66,11 @@ resource "aws_eks_node_group" "this" {
   }
 }
 
-resource "aws_eks_addon" "this" {
+resource "aws_eks_addon" "core" {
   for_each = toset([
     "vpc-cni",
     "coredns",
-    "kube-proxy",
-    "aws-ebs-csi-driver"
+    "kube-proxy"
   ])
 
   cluster_name                = aws_eks_cluster.this.name
@@ -110,4 +79,17 @@ resource "aws_eks_addon" "this" {
   resolve_conflicts_on_update = "OVERWRITE"
 
   depends_on = [aws_eks_node_group.this]
+}
+
+resource "aws_eks_addon" "ebs_csi_driver" {
+  cluster_name                = aws_eks_cluster.this.name
+  addon_name                  = "aws-ebs-csi-driver"
+  service_account_role_arn    = aws_iam_role.ebs_csi_irsa.arn
+  resolve_conflicts_on_create = "OVERWRITE"
+  resolve_conflicts_on_update = "OVERWRITE"
+
+  depends_on = [
+    aws_eks_node_group.this,
+    aws_iam_role_policy_attachment.ebs_csi_irsa_policy
+  ]
 }

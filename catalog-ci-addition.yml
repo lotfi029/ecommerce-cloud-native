@@ -1,0 +1,19 @@
+    - name: Trigger infra deployment
+      if: ${{ success() }}
+      env:
+        IMAGE_TAG: sha-${{ github.sha }}
+      run: |
+        curl --fail-with-body --silent --show-error \
+          -X POST \
+          -H "Accept: application/vnd.github+json" \
+          -H "Authorization: Bearer ${{ secrets.INFRA_DISPATCH_TOKEN }}" \
+          https://api.github.com/repos/REPLACE_ORG/REPLACE_INFRA_REPO/dispatches \
+          -d "{\"event_type\":\"catalog_image_pushed\",\"client_payload\":{\"image_tag\":\"${IMAGE_TAG}\",\"triggered_by\":\"${{ github.actor }}\",\"commit_sha\":\"${{ github.sha }}\"}}"
+      # Setup instructions:
+      # 1. Create a fine-grained PAT with repository access limited to REPLACE_ORG/REPLACE_INFRA_REPO.
+      # 2. Grant that PAT the repository permission "Actions: Write".
+      # 3. Add the PAT as INFRA_DISPATCH_TOKEN in the CatalogService repository secrets.
+      # 4. Add AWS_ACCESS_KEY_ID and AWS_SECRET_ACCESS_KEY in the infra repository secrets.
+      # 5. Add AWS_REGION and EKS_CLUSTER_NAME in the infra repository variables.
+      # 6. Replace REPLACE_ORG with your GitHub organization or username.
+      # 7. Replace REPLACE_INFRA_REPO with the name of this infrastructure repository.

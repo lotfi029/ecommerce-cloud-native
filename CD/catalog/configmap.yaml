@@ -5,3 +5,4 @@ metadata:
   namespace: default
 data:
   ElasticSettings__Uri: "http://elasticsearch-service:9200"
+  Serilog__WriteTo__2__Args__serverUrl: "http://seq-service:5341"
